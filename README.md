@@ -1,5 +1,10 @@
 # restapi
-RestAPI wrapper with generic GET/POST handlers and middleware logger. Based on Chi router (https://github.com/go-chi/chi).
+RestAPI wrapper for Chi router with generic GET/POST handlers and middleware logger (slog-based). Helps to simplify http API implementation.
+
+### Generic GET handler
+
+Boilerplate to run a server with GET route:
+
 
     log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -19,7 +24,7 @@ RestAPI wrapper with generic GET/POST handlers and middleware logger. Based on C
 	rest.Shutdown(3 * time.Second)
 
 
-Now you can curl http://localhost:8080/version and the output will be:
+Now you can `curl http://localhost:8080/version` and the output will be:
 
     {"status":"Ok","data":"API v.1"}
 
@@ -31,13 +36,17 @@ While stdout will provide you with structured logging about request:
 {"time":"2024-06-17T05:44:01.95231069Z","level":"INFO","msg":"request completed","module":"RestAPI","middleware":"logger","request":{"id":"71665260ed60/H7dkBWiVKA-000001","endpoint":"/version","method":"GET","remote_addr":"127.0.0.1:36878","user_agent":"curl/7.88.1"},"stats":{"status":200,"bytes":33,"duration":"2.125021ms"}}
 ```
 
-Module provides generic POST handler with channel-based notification on file upload events and automatic UUID assignment for uploads:
+You can supply rest.Generic_GET_handler(data interface{}) with any sort of the data that can be marshalled to the client.
+
+### Generic POST handler
+
+Module provides generic POST handler with channel-based notification on file upload events and automatic UUID assignment for files uploaded:
 
     // create channel and add POST route with destination folder, 
 	// naming mask for uploaded files and channel for tracking uploads:
 
     uploadsChan := make(chan restapi.TFileUpload)
-	rest.Router.Post("/upload", rest.Generic_POST_File("payload", "./", "", uploadsChan))
+	rest.Router.Post("/upload", rest.Generic_POST_File("payload", "./upload/dir", "upload_*", uploadsChan))
 
 	// start tracking uploads via channel notifications:
 
@@ -47,16 +56,18 @@ Module provides generic POST handler with channel-based notification on file upl
 		}
 	}(uploadsChan)
 
-Now you can curl curl -F "payload=@./example/file.txt" http://localhost:8080/upload and responsewill be like:
+Now you can `curl -F "payload=@./example/file.txt" http://localhost:8080/upload` and response will contain new UUID for the file uploaded:
 
 	{"status":"Ok","data":"cdee67b2-3566-46c2-9c83-702b298cb548"}
 
-Handler automatically assignes UUID for the file uploaded. The output on stdout will be like:
+The output on stdout provides detailed logging for the event:
 
 ```
-{"time":"2024-06-17T06:22:32.469050045Z","level":"INFO","msg":"new upload","module":"RestAPI","handler":"generic","request":{"id":"71665260ed60/uGrW4maTks-000001","route":"/upload","method":"POST","remote_addr":"127.0.0.1:49810","user_agent":"curl/7.88.1"},"file":{"UUID":"cdee67b2-3566-46c2-9c83-702b298cb548","Path":"./upload_2458019802","Filename":"file.txt","Size":21}}
+{"time":"2024-06-17T06:22:32.469050045Z","level":"INFO","msg":"new upload","module":"RestAPI","handler":"generic","request":{"id":"71665260ed60/uGrW4maTks-000001","route":"/upload","method":"POST","remote_addr":"127.0.0.1:49810","user_agent":"curl/7.88.1"},"file":{"UUID":"cdee67b2-3566-46c2-9c83-702b298cb548","Path":"./upload/dir/upload_2458019802","Filename":"file.txt","Size":21}}
 
-File uploaded: {cdee67b2-3566-46c2-9c83-702b298cb548 ./upload_2458019802 0xc000096360}
+File uploaded: {cdee67b2-3566-46c2-9c83-702b298cb548 ./upload/dir/upload_2458019802 0xc000096360}
 
 {"time":"2024-06-17T06:22:32.472910764Z","level":"INFO","msg":"request completed","module":"RestAPI","middleware":"logger","request":{"id":"71665260ed60/uGrW4maTks-000001","endpoint":"/upload","method":"POST","remote_addr":"127.0.0.1:49810","user_agent":"curl/7.88.1"},"stats":{"status":200,"bytes":62,"duration":"7.207908ms"}}
 ```
+
+Naming convention for uploads follows https://pkg.go.dev/os#CreateTemp. Original file name is stored in restapi.TFileUpload.
