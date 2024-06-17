@@ -20,7 +20,7 @@ func main() {
 
 	// ROUTE: POST /upload (generic handler). Example: curl -F "payload=@./example/file.txt" http://localhost:8080/upload
 	uploadsChan := make(chan restapi.TFileUpload)
-	rest.Router.Post("/upload", rest.Generic_POST_File("payload", "./", "", uploadsChan))
+	rest.Router.Post("/upload", rest.Generic_POST_handler("payload", "./", "", uploadsChan))
 
 	go func(ch chan restapi.TFileUpload) {
 		for newFile := range ch {

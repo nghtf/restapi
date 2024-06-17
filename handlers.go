@@ -50,7 +50,7 @@ func (api *TRestAPI) Generic_GET_handler(data interface{}) http.HandlerFunc {
 	Generic POST handler
 */
 
-const UPLOAD_PATTERN = "upload_*"
+const DEFAULT_UPLOAD_PATTERN = "upload_*"
 
 type TFileUpload struct {
 	ID     string // UUID
@@ -60,7 +60,7 @@ type TFileUpload struct {
 
 // Retrieves a file from formField and notifies (optional) path of the saved file to a channel.
 // Uploads are stored as files named by a pattern provided or default UPLOAD_PATTERN is used.
-func (api *TRestAPI) Generic_POST_File(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
+func (api *TRestAPI) Generic_POST_handler(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log := enrich(api.log, r)
@@ -109,7 +109,7 @@ func (rest *TRestAPI) uploader(formField string, uploadDir string, tempPattern s
 	fileUpload.Header = header
 
 	if tempPattern == "" {
-		tempPattern = UPLOAD_PATTERN
+		tempPattern = DEFAULT_UPLOAD_PATTERN
 	}
 
 	dst, err := os.CreateTemp(uploadDir, tempPattern)

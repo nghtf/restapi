@@ -46,7 +46,7 @@ Module provides generic POST handler with channel-based notification on file upl
 	// naming mask for uploaded files and channel for tracking uploads:
 
     uploadsChan := make(chan restapi.TFileUpload)
-	rest.Router.Post("/upload", rest.Generic_POST_File("payload", "./upload/dir", "upload_*", uploadsChan))
+	rest.Router.Post("/upload", rest.Generic_POST_handler("payload", "./upload/dir", "upload_*", uploadsChan))
 
 	// start tracking uploads via channel notifications:
 
