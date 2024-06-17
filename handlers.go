@@ -73,6 +73,15 @@ func (api *TRestAPI) Generic_POST_File(formField string, uploadDir string, tempP
 			return
 		}
 
+		log.Info("new upload",
+			slog.Group("file",
+				slog.String("UUID", fu.ID),
+				slog.String("Path", fu.Path),
+				slog.String("Filename", fu.Header.Filename),
+				slog.Int64("Size", fu.Header.Size),
+			),
+		)
+
 		if fch != nil {
 			fch <- fu
 		}

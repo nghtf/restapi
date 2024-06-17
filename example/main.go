@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -20,7 +21,12 @@ func main() {
 	// ROUTE: POST /upload (generic handler). Example: curl -F "payload=@./example/file.txt" http://localhost:8080/upload
 	uploadsChan := make(chan restapi.TFileUpload)
 	rest.Router.Post("/upload", rest.Generic_POST_File("payload", "./", "", uploadsChan))
-	go manager(log, uploadsChan)
+
+	go func(ch chan restapi.TFileUpload) {
+		for newFile := range ch {
+			fmt.Println("File uploaded:", newFile)
+		}
+	}(uploadsChan)
 
 	rest.StartAt(":8080")
 
@@ -30,18 +36,4 @@ func main() {
 	<-c
 	rest.Shutdown(3 * time.Second)
 
-}
-
-func manager(log *slog.Logger, ch chan restapi.TFileUpload) {
-	log = log.With(slog.String("module", "manager"))
-	for newFile := range ch {
-		log.Info("new upload",
-			slog.Group("file",
-				slog.String("UUID", newFile.ID),
-				slog.String("Path", newFile.Path),
-				slog.String("Filename", newFile.Header.Filename),
-				slog.Int64("Size", newFile.Header.Size),
-			),
-		)
-	}
 }
