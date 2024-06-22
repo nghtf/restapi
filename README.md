@@ -12,7 +12,7 @@ Boilerplate to run a server with GET route:
 	rest := restapi.New(log.With("module", "RestAPI"), true)
 
     // add new generic GET endpoint (route)
-	rest.Router.Get("/version", rest.Generic_GET_handler("API v.1"))
+	rest.Router.Get("/version", rest.Generic.GET("API v.1"))
 
     // start server
 	rest.StartAt(":8080")
@@ -36,7 +36,7 @@ While stdout will provide you with structured logging about request:
 {"time":"2024-06-17T05:44:01.95231069Z","level":"INFO","msg":"request completed","module":"RestAPI","middleware":"logger","request":{"id":"71665260ed60/H7dkBWiVKA-000001","endpoint":"/version","method":"GET","remote_addr":"127.0.0.1:36878","user_agent":"curl/7.88.1"},"stats":{"status":200,"bytes":33,"duration":"2.125021ms"}}
 ```
 
-You can supply rest.Generic_GET_handler(data interface{}) with any sort of the data that can be marshalled to the client.
+You can supply rest.Generic.GET(data interface{}) with any sort of the data that can be marshalled to the client.
 
 ### Generic POST handler
 
@@ -46,7 +46,7 @@ Module provides generic POST handler with channel-based notification on file upl
 	// naming mask for uploaded files and channel for tracking uploads:
 
     uploadsChan := make(chan restapi.TFileUpload)
-	rest.Router.Post("/upload", rest.Generic_POST_handler("payload", "./upload/dir", "upload_*", uploadsChan))
+	rest.Router.Post("/upload", rest.Generic.POST("payload", "./upload/dir", "upload_*", uploadsChan))
 
 	// start tracking uploads via channel notifications:
 
@@ -70,4 +70,5 @@ File uploaded: {cdee67b2-3566-46c2-9c83-702b298cb548 ./upload/dir/upload_2458019
 {"time":"2024-06-17T06:22:32.472910764Z","level":"INFO","msg":"request completed","module":"RestAPI","middleware":"logger","request":{"id":"71665260ed60/uGrW4maTks-000001","endpoint":"/upload","method":"POST","remote_addr":"127.0.0.1:49810","user_agent":"curl/7.88.1"},"stats":{"status":200,"bytes":62,"duration":"7.207908ms"}}
 ```
 
-Naming convention for uploads follows https://pkg.go.dev/os#CreateTemp. Original file name is stored in restapi.TFileUpload.
+Naming convention for uploads follows https://pkg.go.dev/os#CreateTemp. 
+Original filename and MIME type are stored in restapi.TFileUpload.Header.
