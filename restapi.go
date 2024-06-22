@@ -15,12 +15,13 @@ type TRestAPI struct {
 	server         *http.Server
 	enableMwLogger bool
 	Router         *chi.Mux
-	Generic        Handlers
+	Handler        *TGenericHandlers
 }
 
 // Creates new server. Set mw to get middleware logger enabled
 func New(log *slog.Logger, mw bool) *TRestAPI {
 	api := &TRestAPI{log: log, enableMwLogger: mw, Router: chi.NewRouter()}
+	api.Handler = &TGenericHandlers{api: api}
 	api.Router.Use(middleware.RequestID)
 	if mw {
 		mwLogger := &TLogger{}

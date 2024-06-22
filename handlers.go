@@ -13,40 +13,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// Generic handlers
-type Handlers interface {
-	GET(data interface{}) http.HandlerFunc
-	POST(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc
-}
-
-func e(err error) slog.Attr {
-	return slog.String("error", err.Error())
-}
-
-func enrich(log *slog.Logger, r *http.Request) *slog.Logger {
-	log = log.With(
-		slog.String("handler", "generic"),
-		slog.Group("request",
-			slog.String("id", middleware.GetReqID(r.Context())),
-			slog.String("route", r.URL.Path),
-			slog.String("method", r.Method),
-			slog.String("remote_addr", r.RemoteAddr),
-			slog.String("user_agent", r.UserAgent()),
-		),
-	)
-	return log
+type TGenericHandlers struct {
+	api *TRestAPI
 }
 
 /*
 	Generic GET handler
 */
 
-// Generic handler for GET request. Returns data to a client, marshalled as TResponseTemplate.Data.
+// Generic GET handler. Returns data to a client (automatically marshalled as TResponseTemplate.Data)
 // Ex1: {"status":"Ok","data":"simple string"}
 // Ex2: {"status":"Ok","data":{"field1":"value","field2":4,"field3":1.3}}
-func (api *TRestAPI) GET(data interface{}) http.HandlerFunc {
+func (h *TGenericHandlers) GET(data interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log := enrich(api.log, r)
+		log := enrich(h.api.log, r)
 		log.Info("new request")
 		render.JSON(w, r, TResponse{}.Data(data))
 	}
@@ -64,15 +44,15 @@ type TFileUpload struct {
 	Header *multipart.FileHeader
 }
 
-// Retrieves a file from formField and notifies (optional) path of the saved file to a channel.
-// Uploads are stored as files named by a pattern provided or default UPLOAD_PATTERN is used.
-func (api *TRestAPI) POST(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
+// Generic POST handler. Retrieves a file and (optionally) sends filepath to the channel.
+// Uploaded files are stored according to name pattern provided (or default DEFAULT_UPLOAD_PATTERN).
+func (h *TGenericHandlers) POST(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		log := enrich(api.log, r)
+		log := enrich(h.api.log, r)
 		log.Info("new request")
 
-		fu, err := api.uploader(formField, uploadDir, tempPattern, r)
+		fu, err := uploader(formField, uploadDir, tempPattern, r)
 		if err != nil {
 			render.JSON(w, r, TResponse{}.Error("internal error"))
 			log.Error("upload failed", e(err))
@@ -96,7 +76,7 @@ func (api *TRestAPI) POST(formField string, uploadDir string, tempPattern string
 	}
 }
 
-func (rest *TRestAPI) uploader(formField string, uploadDir string, tempPattern string, r *http.Request) (TFileUpload, error) {
+func uploader(formField string, uploadDir string, tempPattern string, r *http.Request) (TFileUpload, error) {
 
 	var fileUpload TFileUpload
 
@@ -133,4 +113,24 @@ func (rest *TRestAPI) uploader(formField string, uploadDir string, tempPattern s
 	fileUpload.ID = uuid.New().String()
 
 	return fileUpload, nil
+}
+
+// tools
+
+func e(err error) slog.Attr {
+	return slog.String("error", err.Error())
+}
+
+func enrich(log *slog.Logger, r *http.Request) *slog.Logger {
+	log = log.With(
+		slog.String("handler", "generic"),
+		slog.Group("request",
+			slog.String("id", middleware.GetReqID(r.Context())),
+			slog.String("route", r.URL.Path),
+			slog.String("method", r.Method),
+			slog.String("remote_addr", r.RemoteAddr),
+			slog.String("user_agent", r.UserAgent()),
+		),
+	)
+	return log
 }
