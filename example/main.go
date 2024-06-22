@@ -17,7 +17,7 @@ func main() {
 
 	// Route (GET, generic handler): /version
 	// Example: curl http://localhost:8080/version
-	rest.Router.Get("/version", rest.Handler.GET("API v.1"))
+	rest.Router.Get("/version", rest.Generic.GET("API v.1"))
 
 	// Route (POST, generic handler): /upload
 	uploadsChan := make(chan restapi.TFileUpload)
@@ -27,7 +27,7 @@ func main() {
 		}
 	}(uploadsChan)
 	// Example: curl -F "payload=@./example/file.txt" http://localhost:8080/upload
-	rest.Router.Post("/upload", rest.Handler.POST("payload", "./", restapi.DEFAULT_UPLOAD_PATTERN, uploadsChan))
+	rest.Router.Post("/upload", rest.Generic.POST("payload", "./", restapi.DEFAULT_UPLOAD_PATTERN, uploadsChan))
 
 	// staring the server at localhost:8080
 	rest.StartAt(":8080")
