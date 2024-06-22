@@ -15,6 +15,7 @@ type TRestAPI struct {
 	server         *http.Server
 	enableMwLogger bool
 	Router         *chi.Mux
+	Generic        Handlers
 }
 
 // Creates new server. Set mw to get middleware logger enabled

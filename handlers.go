@@ -13,6 +13,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// Generic handlers
+type Handlers interface {
+	GET(data interface{}) http.HandlerFunc
+	POST(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc
+}
+
 func e(err error) slog.Attr {
 	return slog.String("error", err.Error())
 }
@@ -35,10 +41,10 @@ func enrich(log *slog.Logger, r *http.Request) *slog.Logger {
 	Generic GET handler
 */
 
-// Generic handle for GET request. Returns data to a client, marshalled as TResponseTemplate.Data.
+// Generic handler for GET request. Returns data to a client, marshalled as TResponseTemplate.Data.
 // Ex1: {"status":"Ok","data":"simple string"}
 // Ex2: {"status":"Ok","data":{"field1":"value","field2":4,"field3":1.3}}
-func (api *TRestAPI) Generic_GET_handler(data interface{}) http.HandlerFunc {
+func (api *TRestAPI) GET(data interface{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := enrich(api.log, r)
 		log.Info("new request")
@@ -60,7 +66,7 @@ type TFileUpload struct {
 
 // Retrieves a file from formField and notifies (optional) path of the saved file to a channel.
 // Uploads are stored as files named by a pattern provided or default UPLOAD_PATTERN is used.
-func (api *TRestAPI) Generic_POST_handler(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
+func (api *TRestAPI) POST(formField string, uploadDir string, tempPattern string, fch chan TFileUpload) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		log := enrich(api.log, r)
