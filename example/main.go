@@ -5,8 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"restapi"
 	"time"
+
+	"github.com/nghtf/restapi"
 )
 
 func main() {
