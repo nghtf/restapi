@@ -1,4 +1,4 @@
-module restapi
+module github.com/nghtf/restapi
 
 go 1.22.3
 
